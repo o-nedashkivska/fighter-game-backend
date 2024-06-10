@@ -20,12 +20,17 @@ const containsRequiredFields = (model, data, allRequired = true) => {
   }
 };
 
-const nameIsUnique = ({ name }) => {
+const nameIsUnique = ({ id, name }) => {
   if (name) {
     const fighters = fighterService.getFighters();
-    const fighterWithTheSameName = fighters.find(
-      (fighter) => fighter.name.toLowerCase() === name.toLowerCase()
-    );
+    const fighterWithTheSameName = fighters.find((fighter) => {
+      const nameEquals = fighter.name.toLowerCase() === name.toLowerCase();
+
+      if (id) {
+        return nameEquals && fighter.id !== id;
+      }
+      return nameEquals;
+    });
 
     return !fighterWithTheSameName;
   }
@@ -81,6 +86,7 @@ const createFighterValid = (req, res, next) => {
 };
 
 const updateFighterValid = (req, res, next) => {
+  const { id } = req.params;
   const data = req.body;
   const errorMessage = "Fighter entity to update isn’t valid";
 
@@ -89,7 +95,7 @@ const updateFighterValid = (req, res, next) => {
   } else if (!containsRequiredFields(FIGHTER, data, false)) {
     res.err = errorMessage + ": some required properties are missing";
   } else {
-    const error = validateProperties(data);
+    const error = validateProperties({ ...data, id });
     if (error) {
       res.err = `${errorMessage}: ${error}`;
     }
