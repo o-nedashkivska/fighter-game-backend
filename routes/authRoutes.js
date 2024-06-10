@@ -8,8 +8,16 @@ router.post(
   "/login",
   (req, res, next) => {
     try {
-      // TODO: Implement login action (get the user if it exist with entered credentials)
-      res.data = data;
+      const { email, password } = req.body;
+      const user = userService.getUserByProperties({ email, password });
+
+      if (user) {
+        res.data = user;
+        res.status(200);
+      } else {
+        res.err = "User with the same email and password does not exist";
+        res.status(404);
+      }
     } catch (err) {
       res.err = err;
     } finally {
