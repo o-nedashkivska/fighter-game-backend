@@ -1,5 +1,18 @@
 const responseMiddleware = (req, res, next) => {
-  // TODO: Implement middleware that returns result of the query
+  if (!res.err) {
+    res.status(200).json(res.data);
+  } else {
+    if (res.statusCode === 200) {
+      res.status(400);
+    }
+
+    const error = {
+      error: true,
+      message: res.err,
+    };
+    res.json(error);
+  }
+
   next();
 };
 
