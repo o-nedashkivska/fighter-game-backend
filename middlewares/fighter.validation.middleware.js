@@ -20,7 +20,7 @@ const containsRequiredFields = (model, data, allRequired = true) => {
   }
 };
 
-const nameIsValid = ({ name }) => {
+const nameIsUnique = ({ name }) => {
   if (name) {
     const fighters = fighterService.getFighters();
     const fighterWithTheSameName = fighters.find(
@@ -34,7 +34,7 @@ const nameIsValid = ({ name }) => {
 
 const validators = [
   {
-    validator: nameIsValid,
+    validator: nameIsUnique,
     error: "Fighter with the same name already exists",
   },
   {
