@@ -1,24 +1,6 @@
 import { FIGHTER } from "../models/fighter.js";
 import { fighterService } from "../services/fighterService.js";
-
-const noExtraFields = (model, data) =>
-  Object.keys(data).every((key) => (key === "id" ? false : key in model));
-
-const containsRequiredFields = (model, data, allRequired = true) => {
-  const check = (key) => {
-    if (key === "id" || (key === "health" && allRequired)) {
-      return allRequired;
-    }
-
-    return key in data;
-  };
-
-  if (allRequired) {
-    return Object.keys(model).every(check);
-  } else {
-    return Object.keys(model).some(check);
-  }
-};
+import { validatorService } from "../services/validationService.js";
 
 const nameIsUnique = ({ id, name }) => {
   if (name) {
@@ -44,39 +26,50 @@ const validators = [
   },
   {
     validator: (data) =>
-      "power" in data ? data.power >= 1 && data.power <= 100 : true,
+      "name" in data
+        ? typeof data.name === "string" && data.name.length > 0
+        : true,
+    error: "Name property is invalid",
+  },
+  {
+    validator: (data) =>
+      "power" in data
+        ? typeof data.power === "number" && data.power >= 1 && data.power <= 100
+        : true,
     error: "Power property is invalid",
   },
   {
     validator: (data) =>
-      "defense" in data ? data.defense >= 1 && data.defense <= 10 : true,
+      "defense" in data
+        ? typeof data.defense === "number" &&
+          data.defense >= 1 &&
+          data.defense <= 10
+        : true,
     error: "Defense property is invalid",
   },
   {
     validator: (data) =>
-      "health" in data ? data.health >= 80 && data.health <= 120 : true,
+      "health" in data
+        ? typeof data.health === "number" &&
+          data.health >= 80 &&
+          data.health <= 120
+        : true,
     error: "Health property is invalid",
   },
 ];
-
-const validateProperties = (data) => {
-  for (let { validator, error } of validators) {
-    if (!validator(data)) {
-      return error;
-    }
-  }
-};
 
 const createFighterValid = (req, res, next) => {
   const data = req.body;
   const errorMessage = "Fighter entity to create isn’t valid";
 
-  if (!noExtraFields(FIGHTER, data)) {
+  if (!validatorService.noExtraFields(FIGHTER, data)) {
     res.err = errorMessage + ": there are extra properties";
-  } else if (!containsRequiredFields(FIGHTER, data)) {
+  } else if (
+    !validatorService.containsAllRequiredFields(FIGHTER, data, ["health"])
+  ) {
     res.err = errorMessage + ": some required properties are missing";
   } else {
-    const error = validateProperties(data);
+    const error = validatorService.validateProperties(data, validators);
     if (error) {
       res.err = `${errorMessage}: ${error}`;
     }
@@ -90,12 +83,17 @@ const updateFighterValid = (req, res, next) => {
   const data = req.body;
   const errorMessage = "Fighter entity to update isn’t valid";
 
-  if (!noExtraFields(FIGHTER, data)) {
+  if (!validatorService.noExtraFields(FIGHTER, data)) {
     res.err = errorMessage + ": there are extra properties";
-  } else if (!containsRequiredFields(FIGHTER, data, false)) {
+  } else if (
+    !validatorService.containsSomeRequiredFields(FIGHTER, data, false)
+  ) {
     res.err = errorMessage + ": some required properties are missing";
   } else {
-    const error = validateProperties({ ...data, id });
+    const error = validatorService.validateProperties(
+      { ...data, id },
+      validators
+    );
     if (error) {
       res.err = `${errorMessage}: ${error}`;
     }
